@@ -8,7 +8,7 @@ export async function GET(
   try {
     const { slug } = await params;
     // First get the product by slug to get the product ID
-    const productRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/products/${slug}`);
+    const productRes = await fetch(`/api/products/${slug}`);
     if (!productRes.ok) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
@@ -53,7 +53,7 @@ export async function POST(
     }
     
     // Get product by slug
-    const productRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/products/${slug}`);
+    const productRes = await fetch(`/api/products/${slug}`);
     if (!productRes.ok) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
