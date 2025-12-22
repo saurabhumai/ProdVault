@@ -18,7 +18,15 @@ type Product = {
 };
 
 async function getProduct(slug: string): Promise<Product | null> {
-  const res = await fetch(`/api/products/${slug}`, {
+  // Use absolute URL for server-side rendering
+  const baseUrl = process.env.VERCEL_URL 
+    ? `https://${process.env.VERCEL_URL}` 
+    : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  
+  const url = `${baseUrl}/api/products/${slug}`;
+  console.log('Using ABSOLUTE product URL on server:', url);
+  
+  const res = await fetch(url, {
     cache: "no-store",
   });
   if (!res.ok) return null;

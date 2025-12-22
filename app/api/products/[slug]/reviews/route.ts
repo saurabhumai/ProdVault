@@ -7,8 +7,16 @@ export async function GET(
 ): Promise<Response> {
   try {
     const { slug } = await params;
+    // Use absolute URL for server-side rendering
+    const baseUrl = process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}` 
+      : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    
+    const url = `${baseUrl}/api/products/${slug}`;
+    console.log('Using ABSOLUTE products URL in reviews API:', url);
+    
     // First get the product by slug to get the product ID
-    const productRes = await fetch(`/api/products/${slug}`);
+    const productRes = await fetch(url);
     if (!productRes.ok) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
@@ -53,7 +61,14 @@ export async function POST(
     }
     
     // Get product by slug
-    const productRes = await fetch(`/api/products/${slug}`);
+    const baseUrl = process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}` 
+      : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    
+    const url = `${baseUrl}/api/products/${slug}`;
+    console.log('Using ABSOLUTE products URL in reviews API POST:', url);
+    
+    const productRes = await fetch(url);
     if (!productRes.ok) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
