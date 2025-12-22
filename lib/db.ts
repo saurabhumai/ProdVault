@@ -18,117 +18,122 @@ interface Product {
   image?: string;
 }
 
-const db = new Database("./dev.db");
+// Only create database connection if not in build time
+const db = process.env.NODE_ENV === 'production' || process.env.NEXT_PHASE === 'phase-production-build' ? null : new Database("./dev.db");
 
 // Initialize tables
-db.exec(`
-  CREATE TABLE IF NOT EXISTS Category (
-    id TEXT PRIMARY KEY,
-    name TEXT UNIQUE NOT NULL,
-    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-  CREATE TABLE IF NOT EXISTS Product (
-    id TEXT PRIMARY KEY,
-    slug TEXT UNIQUE NOT NULL,
-    title TEXT NOT NULL,
-    description TEXT NOT NULL,
-    longDesc TEXT NOT NULL,
-    priceCents INTEGER NOT NULL,
-    isActive INTEGER DEFAULT 1,
-    popularity INTEGER DEFAULT 0,
-    digitalFileId TEXT,
-    categoryId TEXT,
-    image TEXT,
-    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (categoryId) REFERENCES Category(id)
-  );
-  CREATE TABLE IF NOT EXISTS Review (
-    id TEXT PRIMARY KEY,
-    productId TEXT NOT NULL,
-    userId TEXT NOT NULL,
-    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
-    title TEXT,
-    content TEXT NOT NULL,
-    isVerified INTEGER DEFAULT 0,
-    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (productId) REFERENCES Product(id) ON DELETE CASCADE,
-    FOREIGN KEY (userId) REFERENCES User(id) ON DELETE CASCADE
-  );
-  CREATE TABLE IF NOT EXISTS User (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    email TEXT UNIQUE NOT NULL,
-    passwordHash TEXT NOT NULL,
-    isBlocked INTEGER DEFAULT 0,
-    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-  CREATE TABLE IF NOT EXISTS Session (
-    id TEXT PRIMARY KEY,
-    tokenHash TEXT UNIQUE NOT NULL,
-    userId TEXT NOT NULL,
-    expiresAt DATETIME NOT NULL,
-    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (userId) REFERENCES User(id)
-  );
-  CREATE TABLE IF NOT EXISTS "Order" (
-    id TEXT PRIMARY KEY,
-    status TEXT DEFAULT "PENDING",
-    currency TEXT DEFAULT "INR",
-    subtotalCents INTEGER NOT NULL,
-    discountCents INTEGER DEFAULT 0,
-    taxCents INTEGER DEFAULT 0,
-    totalCents INTEGER NOT NULL,
-    userId TEXT NOT NULL,
-    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (userId) REFERENCES User(id)
-  );
-  CREATE TABLE IF NOT EXISTS OrderItem (
-    id TEXT PRIMARY KEY,
-    quantity INTEGER DEFAULT 1,
-    unitCents INTEGER NOT NULL,
-    totalCents INTEGER NOT NULL,
-    orderId TEXT NOT NULL,
-    productId TEXT NOT NULL,
-    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (orderId) REFERENCES "Order"(id),
-    FOREIGN KEY (productId) REFERENCES Product(id)
-  );
-  CREATE TABLE IF NOT EXISTS Payment (
-    id TEXT PRIMARY KEY,
-    status TEXT DEFAULT "PENDING",
-    provider TEXT NOT NULL,
-    providerRef TEXT,
-    amountCents INTEGER NOT NULL,
-    currency TEXT DEFAULT "INR",
-    rawPayload TEXT,
-    orderId TEXT NOT NULL,
-    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (orderId) REFERENCES "Order"(id)
-  );
-  CREATE TABLE IF NOT EXISTS Download (
-    id TEXT PRIMARY KEY,
-    status TEXT DEFAULT "ISSUED",
-    tokenHash TEXT UNIQUE NOT NULL,
-    expiresAt DATETIME NOT NULL,
-    usedAt DATETIME,
-    userId TEXT NOT NULL,
-    productId TEXT NOT NULL,
-    orderId TEXT NOT NULL,
-    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (userId) REFERENCES User(id),
-    FOREIGN KEY (productId) REFERENCES Product(id),
-    FOREIGN KEY (orderId) REFERENCES "Order"(id)
-  );
-`);
+if (db) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS Category (
+      id TEXT PRIMARY KEY,
+      name TEXT UNIQUE NOT NULL,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS Product (
+      id TEXT PRIMARY KEY,
+      slug TEXT UNIQUE NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      longDesc TEXT NOT NULL,
+      priceCents INTEGER NOT NULL,
+      isActive INTEGER DEFAULT 1,
+      popularity INTEGER DEFAULT 0,
+      digitalFileId TEXT,
+      categoryId TEXT,
+      image TEXT,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (categoryId) REFERENCES Category(id)
+    );
+    CREATE TABLE IF NOT EXISTS Review (
+      id TEXT PRIMARY KEY,
+      productId TEXT NOT NULL,
+      userId TEXT NOT NULL,
+      rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+      title TEXT,
+      content TEXT NOT NULL,
+      isVerified INTEGER DEFAULT 0,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (productId) REFERENCES Product(id) ON DELETE CASCADE,
+      FOREIGN KEY (userId) REFERENCES User(id) ON DELETE CASCADE
+    );
+    CREATE TABLE IF NOT EXISTS User (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      email TEXT UNIQUE NOT NULL,
+      passwordHash TEXT NOT NULL,
+      isBlocked INTEGER DEFAULT 0,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS Session (
+      id TEXT PRIMARY KEY,
+      tokenHash TEXT UNIQUE NOT NULL,
+      userId TEXT NOT NULL,
+      expiresAt DATETIME NOT NULL,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (userId) REFERENCES User(id)
+    );
+    CREATE TABLE IF NOT EXISTS "Order" (
+      id TEXT PRIMARY KEY,
+      status TEXT DEFAULT "PENDING",
+      currency TEXT DEFAULT "INR",
+      subtotalCents INTEGER NOT NULL,
+      discountCents INTEGER DEFAULT 0,
+      taxCents INTEGER DEFAULT 0,
+      totalCents INTEGER NOT NULL,
+      userId TEXT NOT NULL,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (userId) REFERENCES User(id)
+    );
+    CREATE TABLE IF NOT EXISTS OrderItem (
+      id TEXT PRIMARY KEY,
+      quantity INTEGER DEFAULT 1,
+      unitCents INTEGER NOT NULL,
+      totalCents INTEGER NOT NULL,
+      orderId TEXT NOT NULL,
+      productId TEXT NOT NULL,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (orderId) REFERENCES "Order"(id),
+      FOREIGN KEY (productId) REFERENCES Product(id)
+    );
+    CREATE TABLE IF NOT EXISTS Payment (
+      id TEXT PRIMARY KEY,
+      status TEXT DEFAULT "PENDING",
+      provider TEXT NOT NULL,
+      providerRef TEXT,
+      amountCents INTEGER NOT NULL,
+      currency TEXT DEFAULT "INR",
+      rawPayload TEXT,
+      orderId TEXT NOT NULL,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (orderId) REFERENCES "Order"(id)
+    );
+    CREATE TABLE IF NOT EXISTS Download (
+      id TEXT PRIMARY KEY,
+      status TEXT DEFAULT "ISSUED",
+      tokenHash TEXT UNIQUE NOT NULL,
+      expiresAt DATETIME NOT NULL,
+      usedAt DATETIME,
+      userId TEXT NOT NULL,
+      productId TEXT NOT NULL,
+      orderId TEXT NOT NULL,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (userId) REFERENCES User(id),
+      FOREIGN KEY (productId) REFERENCES Product(id),
+      FOREIGN KEY (orderId) REFERENCES "Order"(id)
+    );
+  `);
+}
 
 // Seed helper
 export function seedDb() {
+  if (!db) return { categories: 0, products: 0 };
+  
   const categories = Array.from(new Set(PRODUCTS.map((p) => p.category)));
   const categoryMap = new Map<string, string>();
 
@@ -165,6 +170,7 @@ export function seedDb() {
 
 // Query helpers
 export function getProducts() {
+  if (!db) return [];
   const rows = db.prepare(`
     SELECT
       p.*,
@@ -181,6 +187,7 @@ export function getProducts() {
 }
 
 export function getProductBySlug(slug: string) {
+  if (!db) return undefined;
   const row = db.prepare(`
     SELECT
       p.*,
@@ -198,6 +205,8 @@ export function getProductBySlug(slug: string) {
 
 // Order helpers
 export function createOrder(userId: string, items: { productId: string; quantity: number; unitCents: number }[]) {
+  if (!db) return { orderId: "", totalCents: 0 };
+  
   const orderId = `order_${Date.now()}_${Math.random().toString(36).slice(2)}`;
   const subtotalCents = items.reduce((sum, i) => sum + i.unitCents * i.quantity, 0);
   const totalCents = subtotalCents; // No tax/discount for now
@@ -223,6 +232,8 @@ export function createOrder(userId: string, items: { productId: string; quantity
 }
 
 export function getUserOrders(userId: string) {
+  if (!db) return [];
+  
   const orders = db.prepare(`
     SELECT
       o.*,
@@ -261,6 +272,8 @@ export function getUserOrders(userId: string) {
 
 // Auth helpers
 export function createUser(name: string, email: string, passwordHash: string) {
+  if (!db) return { userId: "" };
+  
   const userId = `user_${Date.now()}_${Math.random().toString(36).slice(2)}`;
   const insert = db.prepare(`
     INSERT INTO User (id, name, email, passwordHash)
@@ -271,10 +284,13 @@ export function createUser(name: string, email: string, passwordHash: string) {
 }
 
 export function getUserByEmail(email: string) {
+  if (!db) return undefined;
   return db.prepare("SELECT * FROM User WHERE email = ?").get(email) as any | undefined;
 }
 
 export function createSession(userId: string, tokenHash: string, expiresAt: Date) {
+  if (!db) return { sessionId: "" };
+  
   const sessionId = `sess_${Date.now()}_${Math.random().toString(36).slice(2)}`;
   const insert = db.prepare(`
     INSERT INTO Session (id, userId, tokenHash, expiresAt)
@@ -285,6 +301,7 @@ export function createSession(userId: string, tokenHash: string, expiresAt: Date
 }
 
 export function getSessionByTokenHash(tokenHash: string) {
+  if (!db) return undefined;
   return db.prepare(`
     SELECT s.*, u.* FROM Session s
     JOIN User u ON s.userId = u.id
@@ -293,11 +310,14 @@ export function getSessionByTokenHash(tokenHash: string) {
 }
 
 export function deleteSessionByTokenHash(tokenHash: string) {
+  if (!db) return;
   return db.prepare("DELETE FROM Session WHERE tokenHash = ?").run(tokenHash);
 }
 
 // Review helpers
 export function createReview(productId: string, userId: string, rating: number, title: string | null, content: string) {
+  if (!db) return { reviewId: "" };
+  
   const reviewId = `review_${Date.now()}_${Math.random().toString(36).slice(2)}`;
   const insert = db.prepare(`
     INSERT INTO Review (id, productId, userId, rating, title, content)
@@ -308,6 +328,7 @@ export function createReview(productId: string, userId: string, rating: number, 
 }
 
 export function getProductReviews(productId: string) {
+  if (!db) return [];
   return db.prepare(`
     SELECT
       r.*,
@@ -321,6 +342,18 @@ export function getProductReviews(productId: string) {
 }
 
 export function getProductReviewSummary(productId: string) {
+  if (!db) return {
+    totalReviews: 0,
+    averageRating: 0,
+    ratingDistribution: {
+      5: 0,
+      4: 0,
+      3: 0,
+      2: 0,
+      1: 0,
+    }
+  };
+  
   const summary = db.prepare(`
     SELECT
       COUNT(*) as totalReviews,
@@ -348,6 +381,8 @@ export function getProductReviewSummary(productId: string) {
 }
 
 export function updateReview(reviewId: string, rating: number, title: string | null, content: string, userId: string) {
+  if (!db) return { updated: false };
+  
   const update = db.prepare(`
     UPDATE Review 
     SET rating = ?, title = ?, content = ?, updatedAt = CURRENT_TIMESTAMP
@@ -358,12 +393,15 @@ export function updateReview(reviewId: string, rating: number, title: string | n
 }
 
 export function deleteReview(reviewId: string, userId: string) {
+  if (!db) return { deleted: false };
+  
   const deleteStmt = db.prepare("DELETE FROM Review WHERE id = ? AND userId = ?");
   const result = deleteStmt.run(reviewId, userId);
   return { deleted: result.changes > 0 };
 }
 
 export function getUserReviewForProduct(productId: string, userId: string) {
+  if (!db) return undefined;
   return db.prepare(`
     SELECT * FROM Review 
     WHERE productId = ? AND userId = ?
