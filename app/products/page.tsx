@@ -18,28 +18,40 @@ type Product = {
 };
 
 async function getProducts(): Promise<Product[]> {
-  const res = await fetch("/api/products", {
-    cache: "no-store",
-  });
-  if (!res.ok) throw new Error("Failed to fetch products");
-  const { products } = await res.json();
-  return products.map((p: any) => ({
-    id: p.id,
-    slug: p.slug,
-    title: p.title,
-    description: p.description,
-    longDesc: p.longDesc,
-    priceCents: p.priceCents,
-    popularity: p.popularity,
-    categoryName: p.categoryName,
-    image: p.image,
-  }));
+  try {
+    const res = await fetch("/api/products", {
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      console.error("API response not OK:", res.status, res.statusText);
+      throw new Error("Failed to fetch products");
+    }
+    const data = await res.json();
+    console.log("API data:", data);
+    const { products } = data;
+    return products.map((p: any) => ({
+      id: p.id,
+      slug: p.slug,
+      title: p.title,
+      description: p.description,
+      longDesc: p.longDesc,
+      priceCents: p.priceCents,
+      popularity: p.popularity,
+      categoryName: p.categoryName,
+      image: p.image,
+    }));
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    throw error;
+  }
 }
 
 function normalizeSort(value: unknown): SortKey {
   if (value === "price_asc" || value === "price_desc") return value;
   return "popular";
 }
+
+export const dynamic = 'force-dynamic';
 
 export default async function ProductsPage({
   searchParams,
