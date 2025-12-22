@@ -19,15 +19,19 @@ type Product = {
 
 async function getProducts(): Promise<Product[]> {
   try {
+    console.log("Starting fetch to /api/products");
     const res = await fetch("/api/products", {
       cache: "no-store",
     });
+    console.log("Fetch completed, response status:", res.status);
+    
     if (!res.ok) {
       console.error("API response not OK:", res.status, res.statusText);
       throw new Error("Failed to fetch products");
     }
+    
     const data = await res.json();
-    console.log("API data:", data);
+    console.log("API data parsed successfully:", data.products?.length || 0, "products");
     const { products } = data;
     return products.map((p: any) => ({
       id: p.id,
@@ -42,6 +46,7 @@ async function getProducts(): Promise<Product[]> {
     }));
   } catch (error) {
     console.error("Error fetching products:", error);
+    console.error("Error details:", error instanceof Error ? error.message : error);
     throw error;
   }
 }
