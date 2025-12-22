@@ -23,6 +23,35 @@ interface Product {
 // Create database connection for serverless environment
 let db: Database.Database | null = null;
 
+function initDb(database: Database.Database) {
+  database
+    .prepare(`
+      CREATE TABLE IF NOT EXISTS Category (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL
+      )
+    `)
+    .run();
+
+  database
+    .prepare(`
+      CREATE TABLE IF NOT EXISTS Product (
+        id TEXT PRIMARY KEY,
+        slug TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT,
+        longDesc TEXT,
+        priceCents INTEGER NOT NULL,
+        isActive INTEGER NOT NULL,
+        popularity INTEGER NOT NULL,
+        categoryId TEXT,
+        image TEXT,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `)
+    .run();
+}
+
 function getDatabaseConnection() {
   if (db) return db;
   
@@ -39,128 +68,15 @@ function getDatabaseConnection() {
     const dbDir = dirname(dbPath);
     mkdirSync(dbDir, { recursive: true });
     
-    db = new Database(dbPath);
+    const database = new Database(dbPath);
+    initDb(database);
+    db = database;
     return db;
   } catch (error) {
     console.error('Database connection failed:', error);
     return null;
   }
 }
-
-// Initialize tables
-function initializeDatabase() {
-  const db = getDatabaseConnection();
-  if (!db) return;
-  
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS Category (
-      id TEXT PRIMARY KEY,
-      name TEXT UNIQUE NOT NULL,
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-    CREATE TABLE IF NOT EXISTS Product (
-      id TEXT PRIMARY KEY,
-      slug TEXT UNIQUE NOT NULL,
-      title TEXT NOT NULL,
-      description TEXT NOT NULL,
-      longDesc TEXT NOT NULL,
-      priceCents INTEGER NOT NULL,
-      isActive INTEGER DEFAULT 1,
-      popularity INTEGER DEFAULT 0,
-      digitalFileId TEXT,
-      categoryId TEXT,
-      image TEXT,
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (categoryId) REFERENCES Category(id)
-    );
-    CREATE TABLE IF NOT EXISTS Review (
-      id TEXT PRIMARY KEY,
-      productId TEXT NOT NULL,
-      userId TEXT NOT NULL,
-      rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
-      title TEXT,
-      content TEXT NOT NULL,
-      isVerified INTEGER DEFAULT 0,
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (productId) REFERENCES Product(id) ON DELETE CASCADE,
-      FOREIGN KEY (userId) REFERENCES User(id) ON DELETE CASCADE
-    );
-    CREATE TABLE IF NOT EXISTS User (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      passwordHash TEXT NOT NULL,
-      isBlocked INTEGER DEFAULT 0,
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-    CREATE TABLE IF NOT EXISTS Session (
-      id TEXT PRIMARY KEY,
-      tokenHash TEXT UNIQUE NOT NULL,
-      userId TEXT NOT NULL,
-      expiresAt DATETIME NOT NULL,
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (userId) REFERENCES User(id)
-    );
-    CREATE TABLE IF NOT EXISTS "Order" (
-      id TEXT PRIMARY KEY,
-      status TEXT DEFAULT "PENDING",
-      currency TEXT DEFAULT "INR",
-      subtotalCents INTEGER NOT NULL,
-      discountCents INTEGER DEFAULT 0,
-      taxCents INTEGER DEFAULT 0,
-      totalCents INTEGER NOT NULL,
-      userId TEXT NOT NULL,
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (userId) REFERENCES User(id)
-    );
-    CREATE TABLE IF NOT EXISTS OrderItem (
-      id TEXT PRIMARY KEY,
-      quantity INTEGER DEFAULT 1,
-      unitCents INTEGER NOT NULL,
-      totalCents INTEGER NOT NULL,
-      orderId TEXT NOT NULL,
-      productId TEXT NOT NULL,
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (orderId) REFERENCES "Order"(id),
-      FOREIGN KEY (productId) REFERENCES Product(id)
-    );
-    CREATE TABLE IF NOT EXISTS Payment (
-      id TEXT PRIMARY KEY,
-      status TEXT DEFAULT "PENDING",
-      provider TEXT NOT NULL,
-      providerRef TEXT,
-      amountCents INTEGER NOT NULL,
-      currency TEXT DEFAULT "INR",
-      rawPayload TEXT,
-      orderId TEXT NOT NULL,
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (orderId) REFERENCES "Order"(id)
-    );
-    CREATE TABLE IF NOT EXISTS Download (
-      id TEXT PRIMARY KEY,
-      status TEXT DEFAULT "ISSUED",
-      tokenHash TEXT UNIQUE NOT NULL,
-      expiresAt DATETIME NOT NULL,
-      usedAt DATETIME,
-      userId TEXT NOT NULL,
-      productId TEXT NOT NULL,
-      orderId TEXT NOT NULL,
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (userId) REFERENCES User(id),
-      FOREIGN KEY (productId) REFERENCES Product(id),
-      FOREIGN KEY (orderId) REFERENCES "Order"(id)
-    );
-  `);
-}
-
-// Initialize database on first import
-initializeDatabase();
 
 // Seed helper
 export function seedDb() {
