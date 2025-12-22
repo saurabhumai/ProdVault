@@ -4,20 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "lint": "eslint"
   },
   "dependencies": {
-    "@prisma/client": "^6.1.0",
     "@types/better-sqlite3": "^7.6.13",
     "bcryptjs": "^2.4.3",
     "better-sqlite3": "^12.5.0",
     "next": "16.1.0",
-    "prisma": "^6.1.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "zod": "^3.25.0"
