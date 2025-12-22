@@ -3,6 +3,18 @@ import { CATEGORIES } from "@/lib/products";
 import ProductCard from "@/components/ProductCard";
 import { formatINRFromCents } from "@/lib/money";
 
+// Debug component to identify client-side fetch issues
+function DebugClientFetch() {
+  return (
+    <div className="bg-yellow-500/20 border border-yellow-500/50 rounded p-4 mb-4">
+      <p className="text-yellow-300 text-sm">
+        Debug: This is a server component rendering products. If you see client-side fetch errors, 
+        they might be coming from ProductCard or other client components.
+      </p>
+    </div>
+  );
+}
+
 type SortKey = "popular" | "price_asc" | "price_desc";
 
 type Product = {
@@ -102,6 +114,7 @@ export default async function ProductsPage({
 
     return (
       <div className="mx-auto max-w-6xl px-4 py-10">
+        <DebugClientFetch />
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-slate-50">Products</h1>
