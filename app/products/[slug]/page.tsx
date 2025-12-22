@@ -18,7 +18,7 @@ type Product = {
 };
 
 async function getProduct(slug: string): Promise<Product | null> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/products/${slug}`, {
+  const res = await fetch(`/api/products/${slug}`, {
     cache: "no-store",
   });
   if (!res.ok) return null;
@@ -288,7 +288,7 @@ function ProductDetailContent({ product }: { product: Product }) {
   );
 }
 
-export default async function ProductDetailPage({
+export default async function ProductPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
