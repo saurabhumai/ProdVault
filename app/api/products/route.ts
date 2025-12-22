@@ -3,8 +3,11 @@ import { getProducts, seedDb } from "@/lib/db";
 
 export async function GET(): Promise<Response> {
   try {
-    console.log("Products API called");
+    console.log("GET /api/products hit - starting to fetch products");
+    
+    console.log("Calling getProducts() from database...");
     let products = getProducts();
+    console.log("getProducts() returned:", products.length, "products");
     
     // If no products, seed the database
     if (products.length === 0) {
@@ -19,6 +22,8 @@ export async function GET(): Promise<Response> {
     return NextResponse.json({ products });
   } catch (error) {
     console.error("Error in products API:", error);
+    console.error("Error stack:", error instanceof Error ? error.stack : 'No stack available');
+    console.error("Error message:", error instanceof Error ? error.message : 'Unknown error type');
     return NextResponse.json(
       { error: "Internal server error", message: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
