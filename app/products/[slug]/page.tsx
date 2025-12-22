@@ -4,6 +4,7 @@ import Image from "next/image";
 import { PRODUCTS } from "@/lib/products";
 import AddToCartButton from "@/components/AddToCartButton";
 import { formatINRFromCents } from "@/lib/money";
+import { getProductBySlug } from "@/lib/db";
 
 type Product = {
   id: string;
@@ -18,19 +19,25 @@ type Product = {
 };
 
 async function getProduct(slug: string): Promise<Product | null> {
-  // Use absolute URL for server-side rendering
-  const baseUrl = process.env.VERCEL_URL 
-    ? `https://${process.env.VERCEL_URL}` 
-    : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  console.log("Loading product from database:", slug);
   
-  const url = `${baseUrl}/api/products/${slug}`;
-  console.log('Using ABSOLUTE product URL on server:', url);
+  // Try direct DB access first
+  let product = getProductBySlug(slug);
   
-  const res = await fetch(url, {
-    cache: "no-store",
-  });
-  if (!res.ok) return null;
-  const { product } = await res.json();
+  // If no product found, try seeding the database
+  if (!product) {
+    console.log("Product not found, seeding database...");
+    const { seedDb } = await import("@/lib/db");
+    seedDb();
+    product = getProductBySlug(slug);
+  }
+  
+  if (!product) {
+    console.log("Product still not found after seeding");
+    return null;
+  }
+  
+  console.log("Product found:", product.title);
   return {
     id: product.id,
     slug: product.slug,
