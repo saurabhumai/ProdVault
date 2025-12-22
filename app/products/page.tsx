@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CATEGORIES } from "@/lib/products";
 import ProductCard from "@/components/ProductCard";
 import { formatINRFromCents } from "@/lib/money";
+import { getProducts as getProductsFromDB } from "@/lib/db";
 
 type SortKey = "popular" | "price_asc" | "price_desc";
 
@@ -76,7 +77,23 @@ export default async function ProductsPage({
   const sort = normalizeSort(searchParams?.sort);
 
   try {
-    const products = await getProducts();
+    // TEMP: Try direct DB import to isolate fetch issue
+    console.log("Trying direct DB import...");
+    const dbProducts = await getProductsFromDB();
+    console.log("Direct DB products:", dbProducts.length);
+    
+    const products = dbProducts.map((p: any) => ({
+      id: p.id,
+      slug: p.slug,
+      title: p.title,
+      description: p.description,
+      longDesc: p.longDesc,
+      priceCents: p.priceCents,
+      popularity: p.popularity,
+      categoryName: p.categoryName,
+      image: p.image,
+    }));
+    
     console.log("Products fetched:", products.length);
 
     const filtered = products.filter((p) => {
