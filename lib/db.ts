@@ -50,6 +50,19 @@ function initDb(database: Database.Database) {
       )
     `)
     .run();
+
+  database
+    .prepare(`
+      CREATE TABLE IF NOT EXISTS User (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        passwordHash TEXT NOT NULL,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `)
+    .run();
 }
 
 function getDatabaseConnection() {
