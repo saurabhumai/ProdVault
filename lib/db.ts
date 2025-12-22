@@ -136,6 +136,25 @@ export function getProducts() {
   }));
 }
 
+// Query helpers with auto-seeding
+export function getProductsWithSeeding() {
+  const db = getDatabaseConnection();
+  if (!db) return [];
+  
+  let products = getProducts();
+  
+  // If no products, seed the database
+  if (products.length === 0) {
+    console.log("No products found, seeding database in getProductsWithSeeding");
+    const result = seedDb();
+    console.log('Seeded database:', result);
+    products = getProducts();
+    console.log('Products after seeding:', products.length);
+  }
+  
+  return products;
+}
+
 export function getProductBySlug(slug: string) {
   const db = getDatabaseConnection();
   if (!db) return undefined;

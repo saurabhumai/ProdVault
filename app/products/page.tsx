@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CATEGORIES } from "@/lib/products";
 import ProductCard from "@/components/ProductCard";
 import { formatINRFromCents } from "@/lib/money";
-import { getProducts } from "@/lib/db";
+import { getProductsWithSeeding } from "@/lib/db";
 
 type SortKey = "popular" | "price_asc" | "price_desc";
 
@@ -33,8 +33,8 @@ export default async function ProductsPage({
   const q = (searchParams?.q ?? "").trim();
   const sort = normalizeSort(searchParams?.sort);
 
-  console.log("Loading products from database...");
-  const dbProducts = getProducts();
+  console.log("Loading products from database with auto-seeding...");
+  const dbProducts = getProductsWithSeeding();
   console.log("Database products loaded:", dbProducts.length);
   
   const products = dbProducts.map((p: any) => ({
