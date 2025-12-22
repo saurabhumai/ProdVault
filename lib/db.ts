@@ -69,7 +69,6 @@ function initDb(database: Database.Database) {
       CREATE TABLE IF NOT EXISTS Session (
         id TEXT PRIMARY KEY,
         userId TEXT NOT NULL,
-        token TEXT NOT NULL,
         tokenHash TEXT NOT NULL,
         expiresAt DATETIME NOT NULL,
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
