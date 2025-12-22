@@ -63,6 +63,19 @@ function initDb(database: Database.Database) {
       )
     `)
     .run();
+
+  database
+    .prepare(`
+      CREATE TABLE IF NOT EXISTS Session (
+        id TEXT PRIMARY KEY,
+        userId TEXT NOT NULL,
+        token TEXT NOT NULL,
+        expiresAt DATETIME NOT NULL,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (userId) REFERENCES User(id)
+      )
+    `)
+    .run();
 }
 
 function getDatabaseConnection() {
