@@ -1,5 +1,7 @@
 import Database from "better-sqlite3";
 import { PRODUCTS } from "./products";
+import { mkdirSync } from "node:fs";
+import { dirname, join } from "node:path";
 
 interface Product {
   id: string;
@@ -18,11 +20,38 @@ interface Product {
   image?: string;
 }
 
-// Only create database connection if not in build time
-const db = process.env.NODE_ENV === 'production' || process.env.NEXT_PHASE === 'phase-production-build' ? null : new Database("./dev.db");
+// Create database connection for serverless environment
+let db: Database.Database | null = null;
+
+function getDatabaseConnection() {
+  if (db) return db;
+  
+  try {
+    // Skip database during build phase
+    if (process.env.NEXT_PHASE === 'phase-production-build') {
+      return null;
+    }
+    
+    // In Vercel serverless, use /tmp for writable storage
+    const dbPath = process.env.NODE_ENV === 'production' ? '/tmp/dev.db' : './dev.db';
+    
+    // Ensure directory exists
+    const dbDir = dirname(dbPath);
+    mkdirSync(dbDir, { recursive: true });
+    
+    db = new Database(dbPath);
+    return db;
+  } catch (error) {
+    console.error('Database connection failed:', error);
+    return null;
+  }
+}
 
 // Initialize tables
-if (db) {
+function initializeDatabase() {
+  const db = getDatabaseConnection();
+  if (!db) return;
+  
   db.exec(`
     CREATE TABLE IF NOT EXISTS Category (
       id TEXT PRIMARY KEY,
@@ -130,8 +159,12 @@ if (db) {
   `);
 }
 
+// Initialize database on first import
+initializeDatabase();
+
 // Seed helper
 export function seedDb() {
+  const db = getDatabaseConnection();
   if (!db) return { categories: 0, products: 0 };
   
   const categories = Array.from(new Set(PRODUCTS.map((p) => p.category)));
@@ -170,6 +203,7 @@ export function seedDb() {
 
 // Query helpers
 export function getProducts() {
+  const db = getDatabaseConnection();
   if (!db) return [];
   const rows = db.prepare(`
     SELECT
@@ -187,6 +221,7 @@ export function getProducts() {
 }
 
 export function getProductBySlug(slug: string) {
+  const db = getDatabaseConnection();
   if (!db) return undefined;
   const row = db.prepare(`
     SELECT
@@ -205,6 +240,7 @@ export function getProductBySlug(slug: string) {
 
 // Order helpers
 export function createOrder(userId: string, items: { productId: string; quantity: number; unitCents: number }[]) {
+  const db = getDatabaseConnection();
   if (!db) return { orderId: "", totalCents: 0 };
   
   const orderId = `order_${Date.now()}_${Math.random().toString(36).slice(2)}`;
@@ -232,6 +268,7 @@ export function createOrder(userId: string, items: { productId: string; quantity
 }
 
 export function getUserOrders(userId: string) {
+  const db = getDatabaseConnection();
   if (!db) return [];
   
   const orders = db.prepare(`
@@ -272,6 +309,7 @@ export function getUserOrders(userId: string) {
 
 // Auth helpers
 export function createUser(name: string, email: string, passwordHash: string) {
+  const db = getDatabaseConnection();
   if (!db) return { userId: "" };
   
   const userId = `user_${Date.now()}_${Math.random().toString(36).slice(2)}`;
@@ -284,11 +322,13 @@ export function createUser(name: string, email: string, passwordHash: string) {
 }
 
 export function getUserByEmail(email: string) {
+  const db = getDatabaseConnection();
   if (!db) return undefined;
   return db.prepare("SELECT * FROM User WHERE email = ?").get(email) as any | undefined;
 }
 
 export function createSession(userId: string, tokenHash: string, expiresAt: Date) {
+  const db = getDatabaseConnection();
   if (!db) return { sessionId: "" };
   
   const sessionId = `sess_${Date.now()}_${Math.random().toString(36).slice(2)}`;
@@ -301,6 +341,7 @@ export function createSession(userId: string, tokenHash: string, expiresAt: Date
 }
 
 export function getSessionByTokenHash(tokenHash: string) {
+  const db = getDatabaseConnection();
   if (!db) return undefined;
   return db.prepare(`
     SELECT s.*, u.* FROM Session s
@@ -310,12 +351,14 @@ export function getSessionByTokenHash(tokenHash: string) {
 }
 
 export function deleteSessionByTokenHash(tokenHash: string) {
+  const db = getDatabaseConnection();
   if (!db) return;
   return db.prepare("DELETE FROM Session WHERE tokenHash = ?").run(tokenHash);
 }
 
 // Review helpers
 export function createReview(productId: string, userId: string, rating: number, title: string | null, content: string) {
+  const db = getDatabaseConnection();
   if (!db) return { reviewId: "" };
   
   const reviewId = `review_${Date.now()}_${Math.random().toString(36).slice(2)}`;
@@ -328,6 +371,7 @@ export function createReview(productId: string, userId: string, rating: number, 
 }
 
 export function getProductReviews(productId: string) {
+  const db = getDatabaseConnection();
   if (!db) return [];
   return db.prepare(`
     SELECT
@@ -342,6 +386,7 @@ export function getProductReviews(productId: string) {
 }
 
 export function getProductReviewSummary(productId: string) {
+  const db = getDatabaseConnection();
   if (!db) return {
     totalReviews: 0,
     averageRating: 0,
@@ -381,6 +426,7 @@ export function getProductReviewSummary(productId: string) {
 }
 
 export function updateReview(reviewId: string, rating: number, title: string | null, content: string, userId: string) {
+  const db = getDatabaseConnection();
   if (!db) return { updated: false };
   
   const update = db.prepare(`
@@ -393,6 +439,7 @@ export function updateReview(reviewId: string, rating: number, title: string | n
 }
 
 export function deleteReview(reviewId: string, userId: string) {
+  const db = getDatabaseConnection();
   if (!db) return { deleted: false };
   
   const deleteStmt = db.prepare("DELETE FROM Review WHERE id = ? AND userId = ?");
@@ -401,6 +448,7 @@ export function deleteReview(reviewId: string, userId: string) {
 }
 
 export function getUserReviewForProduct(productId: string, userId: string) {
+  const db = getDatabaseConnection();
   if (!db) return undefined;
   return db.prepare(`
     SELECT * FROM Review 
