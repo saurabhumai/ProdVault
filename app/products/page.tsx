@@ -20,7 +20,16 @@ type Product = {
 async function getProducts(): Promise<Product[]> {
   try {
     console.log("Starting fetch to /api/products");
-    const res = await fetch("/api/products", {
+    
+    // Use absolute URL for server-side rendering
+    const baseUrl = process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}` 
+      : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    
+    const url = `${baseUrl}/api/products`;
+    console.log("Fetching from URL:", url);
+    
+    const res = await fetch(url, {
       cache: "no-store",
     });
     console.log("Fetch completed, response status:", res.status);
