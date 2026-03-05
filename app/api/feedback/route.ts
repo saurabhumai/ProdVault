@@ -5,11 +5,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     console.log('Received feedback data:', body)
     
-    // Try multiple possible webhook URLs
+    // Try the correct form URLs
     const webhookUrls = [
-      'https://saurabhumai-123.app.n8n.cloud/webhook/feedback-form',
-      'https://saurabhumai-123.app.n8n.cloud/webhook/a9080614-55de-4a86-8aa1-7e478a9dbc04',
-      'https://saurabhumai-123.app.n8n.cloud/form/a9080614-55de-4a86-8aa1-7e478a9dbc04'
+      'https://saurabhumai-123.app.n8n.cloud/form/a9080614-55de-4a86-8aa1-7e478a9dbc04',
+      'https://saurabhumai-123.app.n8n.cloud/form-test/a9080614-55de-4a86-8aa1-7e478a9dbc04'
     ]
 
     let response: Response | null = null
