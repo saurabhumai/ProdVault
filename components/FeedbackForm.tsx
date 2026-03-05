@@ -17,7 +17,7 @@ export default function FeedbackForm() {
     setIsSubmitting(true)
     
     try {
-      const response = await fetch('https://saurabhumai-123.app.n8n.cloud/webhook/feedback-form', {
+      const response = await fetch('/api/feedback', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
