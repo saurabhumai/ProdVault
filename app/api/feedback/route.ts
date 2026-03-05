@@ -8,17 +8,21 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     console.log('Received feedback data:', JSON.stringify(body, null, 2))
     
-    // Try webhook URL instead of form URL
+    // Create FormData object as expected by n8n
+    const formData = new FormData()
+    formData.append('name', body.name)
+    formData.append('email', body.email)
+    formData.append('feedback', body.feedback)
+    
+    // Try webhook URL with FormData
     const webhookUrl = 'https://saurabhumai-123.app.n8n.cloud/webhook/a9080614-55de-4a86-8aa1-7e478a9dbc04'
     
     console.log('Sending to n8n webhook URL:', webhookUrl)
+    console.log('Sending as FormData')
     
     const response = await fetch(webhookUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
+      body: formData, // Send as FormData instead of JSON
     })
 
     console.log('n8n response status:', response.status)
