@@ -2,66 +2,53 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    console.log('Received feedback data:', body)
+    // Just log that we received the request
+    console.log('Feedback API called')
     
-    // Try the correct form URLs
-    const webhookUrls = [
-      'https://saurabhumai-123.app.n8n.cloud/form/a9080614-55de-4a86-8aa1-7e478a9dbc04',
-      'https://saurabhumai-123.app.n8n.cloud/form-test/a9080614-55de-4a86-8aa1-7e478a9dbc04'
-    ]
+    const body = await request.json()
+    console.log('Received feedback data:', JSON.stringify(body, null, 2))
+    
+    // Try the production form URL first
+    const formUrl = 'https://saurabhumai-123.app.n8n.cloud/form/a9080614-55de-4a86-8aa1-7e478a9dbc04'
+    
+    console.log('Sending to n8n form URL:', formUrl)
+    
+    const response = await fetch(formUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    })
 
-    let response: Response | null = null
-    let workingUrl = ''
+    console.log('n8n response status:', response.status)
+    
+    const responseText = await response.text()
+    console.log('n8n response body:', responseText)
 
-    // Try each URL until one works
-    for (const url of webhookUrls) {
-      try {
-        console.log('Trying webhook URL:', url)
-        response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(body),
-        })
-
-        if (response.ok) {
-          workingUrl = url
-          console.log('Success with URL:', url)
-          break
-        } else {
-          console.log('Failed with URL:', url, 'Status:', response.status)
-        }
-      } catch (err) {
-        console.log('Error with URL:', url, err)
-      }
-    }
-
-    if (!response || !response.ok) {
+    if (!response.ok) {
       return NextResponse.json(
         { 
-          error: 'All webhook URLs failed',
-          triedUrls: webhookUrls,
-          lastStatus: response?.status || 'No response'
+          error: `n8n form error: ${response.status}`,
+          responseText: responseText
         },
         { status: 500 }
       )
     }
 
-    const responseText = await response.text()
-    console.log('n8n response from', workingUrl, ':', response.status, responseText)
-
     return NextResponse.json({ 
       success: true, 
-      webhookUsed: workingUrl,
-      n8nResponse: responseText 
+      message: 'Feedback submitted successfully',
+      n8nStatus: response.status 
     })
+    
   } catch (error) {
-    console.error('Feedback submission error:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error('Feedback API error:', error)
     return NextResponse.json(
-      { error: 'Failed to submit feedback', details: errorMessage },
+      { 
+        error: 'API error', 
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     )
   }
