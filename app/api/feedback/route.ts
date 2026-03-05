@@ -8,12 +8,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     console.log('Received feedback data:', JSON.stringify(body, null, 2))
     
-    // Try the production form URL first
-    const formUrl = 'https://saurabhumai-123.app.n8n.cloud/form/a9080614-55de-4a86-8aa1-7e478a9dbc04'
+    // Try webhook URL instead of form URL
+    const webhookUrl = 'https://saurabhumai-123.app.n8n.cloud/webhook/a9080614-55de-4a86-8aa1-7e478a9dbc04'
     
-    console.log('Sending to n8n form URL:', formUrl)
+    console.log('Sending to n8n webhook URL:', webhookUrl)
     
-    const response = await fetch(formUrl, {
+    const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       return NextResponse.json(
         { 
-          error: `n8n form error: ${response.status}`,
+          error: `n8n webhook error: ${response.status}`,
           responseText: responseText
         },
         { status: 500 }
