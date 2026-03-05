@@ -1,5 +1,6 @@
 // app/page.tsx
 import Link from "next/link";
+import FeedbackForm from "@/components/FeedbackForm";
 
 const navigation = [
   { name: "Products", href: "/products" },
@@ -407,6 +408,9 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      {/* Feedback Form Component */}
+      <FeedbackForm />
     </div>
   );
 }
